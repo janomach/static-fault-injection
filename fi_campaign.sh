@@ -17,29 +17,29 @@
 ###################################################################################################
 
 # Custom variables - modify as you need ###########################################################
-core_config="dcls"
+system_config="hardisc"
 analysis_dir=$PWD/../analysis
-work_dir=$analysis_dir/result/$core_config/work
-#### base
-#predictor_size=5343
-##rfgpr_size=5820
-#pipe_size=14819
-#alu_size=6715
+work_dir=$analysis_dir/work
+#### hardisc
+predictor_size=5343
+rfgpr_size=5820
+pipe_size=14819
+alu_size=6715
 #### dcls
 #predictor_size=10619
 #rfgpr_size=6703
 #pipe_size=11315
 #alu_size=6680
 #### tcls
-predictor_size=16213
-rfgpr_size=10032
-pipe_size=18289
-alu_size=10114
+#predictor_size=16213
+#rfgpr_size=10032
+#pipe_size=18289
+#alu_size=10114
 
-predictor_file=$analysis_dir/source/$core_config/predictor_instances.txt
-rfgpr_file=$analysis_dir/source/$core_config/rfgpr_instances.txt
-pipe_file=$analysis_dir/source/$core_config/pipe_instances.txt
-alu_file=$analysis_dir/source/$core_config/alu_instances.txt
+predictor_file=$analysis_dir/source/$system_config/predictor_instances.txt
+rfgpr_file=$analysis_dir/source/$system_config/rfgpr_instances.txt
+pipe_file=$analysis_dir/source/$system_config/pipe_instances.txt
+alu_file=$analysis_dir/source/$system_config/alu_instances.txt
 
 # Script settings - preserve variables, change their values #######################################
 # Group settings
