@@ -127,7 +127,7 @@ for i in $(seq $run_reps); do
   # Prepare TCL function in the run file
   echo "proc inject_fault {target clock_period} {" >> $run_file
   echo "    set actual_value [ examine \${target} ]" >> $run_file
-  echo "    if { \${actual_value} == \"1'h1\" } {" >> $run_file
+  echo "    if { \${actual_value} == \"1\" } {" >> $run_file
   echo "        force \$target 0 -cancel \$clock_period" >> $run_file
   echo "    } else {" >> $run_file
   echo "        force \$target 1 -cancel \$clock_period" >> $run_file

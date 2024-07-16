@@ -9,19 +9,19 @@ when "${halt_signal} == 1" {
     set timeout [ examine ${timeout_signal} ]
     set failure [ examine ${fail_signal} ]
     set result [ examine ${app_result} ]
-    if { ${timeout} == "1'h1" } {
+    if { ${timeout} == "1" } {
         echo "Timeout"
         set outcome 3
-    } elseif { ${failure} == "1'h1" } {
+    } elseif { ${failure} == "1" } {
         echo "Core failure"
         set outcome 4
-    } elseif { ${result} == "32'h00000000" } {
+    } elseif { ${result} == "0" } {
         echo "Run finished sucesfully"
         set outcome 0
-    } elseif { ${result} == "32'h00000001" } {
+    } elseif { ${result} == "1" } {
         echo "Unexpected app finish"
         set outcome 1
-    } elseif { ${result} == "32'h00000002" } {
+    } elseif { ${result} == "2" } {
         echo "Incorrect result"
         set outcome 2
     } else {
