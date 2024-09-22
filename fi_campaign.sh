@@ -53,6 +53,8 @@ timeout=600000                                                  # time at which 
 fastest=504272                                                  # expected simulation time without fault injection
 max_fi_delay=10000                                              # maximum delay between two fault injections / all groups
 min_fi_delay=1000                                               # minimum delay between two fault injections / all groups
+mbu_prob=10                                                     # probability (%) of multi-bit (double-bit) fault
+stuck_prob=5                                                    # probability (%) of stack-at fault
 clock_period=10                                                 # clock cycle period during RTL simulation
 run_reps=100                                                    # number of simulation runs
 
@@ -80,6 +82,16 @@ get_random() {
   random_dec=$(echo $((16#$random_hex)))
 }
 
+generate_fault() { #see_cycle #target
+    # type of fault (transient or stuck-at)
+    get_random
+    transient=$((($random_dec % 100) >= $stuck_prob))
+    # simulation time at which the fault injection happens
+    see_time=$(($1*$clock_period + $clock_period/2))
+    # save fault injection command to the TCL script
+    echo "when {\$now == {$see_time ns}} { inject_fault \"$2\" $clock_period $transient}" >> $run_file
+}
+
 generate_faults() { #fi_delay #tcount #tfile
   get_random
   # the first fault injection is constrained by the expected (fastest) simulation time
@@ -90,10 +102,22 @@ generate_faults() { #fi_delay #tcount #tfile
     get_random
     random_target=$((($random_dec % $2) + 1))
     target=$(sed "$random_target!d" $3)
-    # simulation time at which the fault injection happens
-    see_time=$(($see_cycle*$clock_period + $clock_period/2))
-    # save fault injection command to the TCL script
-    echo "when {\$now == {$see_time ns}} { inject_fault \"$target\" $clock_period }" >> $run_file
+    generate_fault $see_cycle $target
+    # repeat for MBU
+    get_random
+    if [ $(($random_dec % 100)) -lt $mbu_prob ]; then
+      # select the next target from the tfile
+      if [ $random_target -eq $2 ]; then
+        random_target=$(($random_target - 1))
+      else
+        random_target=$(($random_target + 1))
+      fi
+      echo "# MBU" >> $run_file
+      target=$(sed "$random_target!d" $3)
+      generate_fault $see_cycle $target
+      # to preserve average fault rate, increment twice
+      see_cycle=$(($see_cycle + $1))
+    fi
     # generate new fault injection clock cycle
     see_cycle=$(($see_cycle + $1))
   done
@@ -110,27 +134,38 @@ total_size=0
 # get number of targets
 for i in "${!group_files[@]}"; do
   group_tcount[$i]=$(wc -l < ${group_files[$i]})
-  echo "${group_names[$i]} targets: ${group_tcount[$i]}"
+  echo "Group ${group_names[$i]} has ${group_tcount[$i]} targets"
   total_size=$(($total_size + ${group_sizes[$i]})) 
 done
 
-echo "Fault injection application: $application"
+echo "Fault injection delay: <$min_fi_delay, $max_fi_delay>"
+echo "Multi-bit-upset probability: $mbu_prob%"
+echo "Stuck-at fault probability: $stuck_prob%"
+echo "Application: $application"
 
 for i in $(seq $run_reps); do
   get_random
   avg_fi_delay=$(($min_fi_delay + ($random_dec % ($max_fi_delay - $min_fi_delay))))
-  echo "########################### run $i, fault injection delay: $avg_fi_delay ###########################"
+  echo "########################### run $i/$run_reps, FI delay: $avg_fi_delay ###########################"
   echo -n "$i,$avg_fi_delay," >> $result_file
   run_file=$work_dir/run_$i.tcl
   touch $run_file
 
   # Prepare TCL function in the run file
-  echo "proc inject_fault {target clock_period} {" >> $run_file
+  echo "proc inject_fault {target clock_period transient} {" >> $run_file
   echo "    set actual_value [ examine \${target} ]" >> $run_file
   echo "    if { \${actual_value} == \"1\" } {" >> $run_file
-  echo "        force \$target 0 -cancel \$clock_period" >> $run_file
+  echo "        if { \${transient} == \"1\" } {" >> $run_file
+  echo "          force \$target 0 -cancel \$clock_period" >> $run_file
+  echo "        } else {" >> $run_file
+  echo "          force \$target 0" >> $run_file
+  echo "        }" >> $run_file
   echo "    } else {" >> $run_file
-  echo "        force \$target 1 -cancel \$clock_period" >> $run_file
+  echo "        if { \${transient} == \"1\" } {" >> $run_file
+  echo "          force \$target 1 -cancel \$clock_period" >> $run_file
+  echo "        } else {" >> $run_file
+  echo "          force \$target 1" >> $run_file
+  echo "        }" >> $run_file
   echo "    }" >> $run_file
   echo "}" >> $run_file
 
@@ -139,7 +174,8 @@ for i in $(seq $run_reps); do
     if [ ${group_enable[$i]} -eq 1 ]; then
       # generate fault injection delay for selected group - larger groups have smaller fi delay
       group_fi_delay=$((($avg_fi_delay * $total_size) / ${group_sizes[$i]}))
-      echo "${group_names[$i]} fault injection delay: $group_fi_delay"
+      echo "Group ${group_names[$i]} has FI delay: $group_fi_delay"
+      echo "# Group: ${group_names[$i]}" >> $run_file
       generate_faults $group_fi_delay ${group_tcount[$i]} ${group_files[$i]}
     fi
   done
