@@ -1,9 +1,16 @@
 # Static Fault Injection
 This repository contains scripts for static fault injection (FI) into RTL design resources (wires, registers) during simulation.
-It is static because the faults are generated before the simulation and then injected during the simulation.
-Any fault is created by forcing the state of a selected RTL resource (a target) to the opposite value in the middle of the clock cycle for the duration of one clock cycle. 
-This means that if the affected resource is a register, it will hold the faulty value until the design rewrites it.
-It is possible to define minimal and maximal delay between two fault injections in the whole design, and the script generates a random FI delay within those constraints.
+The **static** means that the faults are generated before the simulation and then injected during the simulation.
+Any fault is created by forcing the state of a selected RTL resource (a target) to the opposite value in the middle of the clock cycle.
+
+The script can generate two types of faults:
+1. **Transient fault** - The forcing of the resource is canceled after a time representing 1 clock period.
+However, this also means that if the affected resource is a register, it will hold the faulty value until the design rewrites it.
+2. **Stuck-at fault** - The forcing of the resource is never canceled, and the resource preserves the forced value regardless of the driving logic.
+
+All faults are transient by default, and the user can define the probability of the stuck-at faults.
+Among **single-bit** faults, it is possible to define a probability of **multi-bit** (double-bit) faults.
+It is also possible to define minimal and maximal **delay** between two fault injections in the whole design, and the script generates a random FI delay within those constraints.
 The time of the first FI is randomly generated, and then the next FIs are performed in increments of the previously generated FI delay.
 It means that in each FI campaign (simulation with FI), the average delay between FI is constant, but the delay and start of the FI are different.
 
