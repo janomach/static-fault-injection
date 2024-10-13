@@ -135,7 +135,9 @@ total_size=0
 for i in "${!group_files[@]}"; do
   group_tcount[$i]=$(wc -l < ${group_files[$i]})
   echo "Group ${group_names[$i]} has ${group_tcount[$i]} targets"
-  total_size=$(($total_size + ${group_sizes[$i]})) 
+  if [ ${group_enable[$i]} -eq 1 ]; then
+    total_size=$(($total_size + ${group_sizes[$i]})) 
+  fi
 done
 
 echo "Fault injection delay: <$min_fi_delay, $max_fi_delay>"
@@ -153,8 +155,8 @@ for i in $(seq $run_reps); do
 
   # Prepare TCL function in the run file
   echo "proc inject_fault {target clock_period transient} {" >> $run_file
-  echo "    set actual_value [ examine \${target} ]" >> $run_file
-  echo "    if { \${actual_value} == \"1\" } {" >> $run_file
+  echo "    set actual_value [ examine -binary \${target} ]" >> $run_file
+  echo "    if { \${actual_value} == \"1'b1\" } {" >> $run_file
   echo "        if { \${transient} == \"1\" } {" >> $run_file
   echo "          force \$target 0 -cancel \$clock_period" >> $run_file
   echo "        } else {" >> $run_file
