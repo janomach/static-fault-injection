@@ -25,7 +25,7 @@ Each group has its assigned footprint (area) at the final chip, so the probabili
 It means that even if two groups have the same footprint but a different count of FI targets, the probability of fault within the group remains the same.
 The footprint should be based on the data from the synthesis of the targeted system.
 
-Fault injection generation methodology:
+Fault injection generation methodology (constant period strategy):
 ![FI generation](https://github.com/janomach/static-fault-injection/blob/main/doc/fi_generation.png)
 
 # Usage
