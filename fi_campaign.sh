@@ -21,40 +21,36 @@ system_config="hardisc"
 analysis_dir=$PWD/../analysis
 work_dir=$analysis_dir/work
 #### hardisc
-predictor_size=5343
-rfgpr_size=5820
-pipe_size=14819
-alu_size=6715
-#### dcls
-#predictor_size=10619
-#rfgpr_size=6703
-#pipe_size=11315
-#alu_size=6680
-#### tcls
-#predictor_size=16213
-#rfgpr_size=10032
-#pipe_size=18289
-#alu_size=10114
+gpr_size=5036   # 64*(15.180 + 63.375)
+rfc_size=4083   # m_rfc - gpr_size
+pred_size=4775  # ras + pred
+alu_size=1924   #
+mdu_size=3511   #
+dp_size=5118    # fe + id + op - pred_size
+tp_size=6383    # core - other_groups - m_csru
 
-predictor_file=$analysis_dir/source/$system_config/predictor_instances.txt
-rfgpr_file=$analysis_dir/source/$system_config/rfgpr_instances.txt
-pipe_file=$analysis_dir/source/$system_config/pipe_instances.txt
+gpr_file=$analysis_dir/source/$system_config/gpr_instances.txt
+rfc_file=$analysis_dir/source/$system_config/rfc_instances.txt
+pred_file=$analysis_dir/source/$system_config/pred_instances.txt
 alu_file=$analysis_dir/source/$system_config/alu_instances.txt
+mdu_file=$analysis_dir/source/$system_config/mdu_instances.txt
+dp_file=$analysis_dir/source/$system_config/dp_instances.txt
+tp_file=$analysis_dir/source/$system_config/tp_instances.txt
 
 # Script settings - preserve variables, change their values #######################################
 # Group settings
-group_names=("predictor" "rfgpr" "pipe" "alu")                  # Fault injection group names
-group_enable=(1 1 1 1)                                          # Select which group is enabled
-group_sizes=($predictor_size $rfgpr_size $pipe_size $alu_size)  # Footprint (Area) of the group at the chip
-group_files=($predictor_file $rfgpr_file $pipe_file $alu_file)  # Group files containing all fault injection targets
+group_names=("gpr" "rfc" "pred" "alu" "mdu" "dp" "tp")           # Fault injection group names
+group_enable=(1 1 1 1 1 1 1)                                     # Select which group is enabled
+group_sizes=($gpr_size $rfc_size $pred_size $alu_size $mdu_size $dp_size $tp_size)  # Footprint (Area) of the group at the chip
+group_files=($gpr_file $rfc_file $pred_file $alu_file $mdu_file $dp_file $tp_file)  # Group files containing all fault injection targets
 
 # Fault injection parameters
 timeout=600000                                                  # time at which the fault injection should stop
-fastest=504272                                                  # expected simulation time without fault injection
-max_fi_delay=10000                                              # maximum delay between two fault injections / all groups
-min_fi_delay=1000                                               # minimum delay between two fault injections / all groups
-mbu_prob=10                                                     # probability (%) of multi-bit (double-bit) fault
-stuck_prob=5                                                    # probability (%) of stack-at fault
+fastest=520000                                                  # expected simulation time without fault injection
+max_fi_delay=1000                                               # maximum delay between two fault injections / all groups
+min_fi_delay=100                                                # minimum delay between two fault injections / all groups
+mbu_prob=0                                                      # probability (%) of multi-bit (double-bit) fault
+stuck_prob=0                                                    # probability (%) of stack-at fault
 clock_period=10                                                 # clock cycle period during RTL simulation
 run_reps=100                                                    # number of simulation runs
 fi_strategy=1                                                   # 0 - constant period, 1 - random period
@@ -62,7 +58,7 @@ fi_strategy=1                                                   # 0 - constant p
 # Hook RTL signals for reporting
 halt_signal="/tb_mh_wrapper/s_halt"                             # execution is halted - simulation finish
 timeout_signal="/tb_mh_wrapper/s_sim_timeout"                   # execution timeout
-fail_signal="/tb_mh_wrapper/s_hrdmax_rst"                       # execution failure
+fail_signal="/tb_mh_wrapper/s_unrec_err[0]"                     # execution failure
 app_result="/tb_mh_wrapper/s_d_hwdata[0]"                       # application result
 
 # Fault injection application
